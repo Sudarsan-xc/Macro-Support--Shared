@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support Macro Console</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div class="brand login-brand">
+      <div class="brand-mark">M</div>
+      <div><strong>MacroDesk</strong><span>Support Console</span></div>
+    </div>
+    <h1>Agent sign in</h1>
+    <p>Sign in to access the shared courier support macro library.</p>
+    <form id="loginForm">
+      <label>Email</label>
+      <input id="loginEmail" type="email" required placeholder="agent@company.com" autocomplete="username">
+      <label>Password</label>
+      <input id="loginPassword" type="password" required placeholder="Password" autocomplete="current-password">
+      <button class="primary login-btn" type="submit">Sign in</button>
+      <div id="loginError" class="login-error hidden"></div>
+    </form>
+    <p class="login-help">Agents must be added to the Supabase project by an administrator.</p>
+  </div>
+</div>
+
+<div id="appShell" class="app-shell hidden">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">M</div>
+      <div><strong>MacroDesk</strong><span>Shared Support Console</span></div>
+    </div>
+    <nav>
+      <button class="nav-item active" data-view="searchView">⌕ <span>Macro Search</span></button>
+      <button class="nav-item" data-view="manageView">＋ <span>Manage Macros</span></button>
+    </nav>
+    <div class="side-section">
+      <div class="side-label">CATEGORIES</div>
+      <div id="sideCategories"></div>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="tip"><b>Shared library</b><br>Changes are saved to the cloud and are visible to all signed-in agents.</div>
+      <button id="logoutBtn" class="ghost logout-btn">Sign out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">COURIER SUPPORT</div>
+        <h1 id="pageTitle">Macro Search</h1>
+      </div>
+      <div class="top-actions">
+        <span id="syncStatus" class="sync-status">Connecting…</span>
+        <span id="userEmail" class="user-email"></span>
+        <button id="exportBtn" class="ghost">Export</button>
+        <label class="ghost file-btn">Import<input id="importFile" type="file" accept=".json"></label>
+        <button id="newTopBtn" class="primary">＋ New Macro</button>
+      </div>
+    </header>
+
+    <section id="searchView" class="view active-view">
+      <div class="search-hero">
+        <div class="search-heading">
+          <h2>What do you need to respond to?</h2>
+          <p>Search by situation, keyword, category, or macro wording.</p>
+        </div>
+        <div class="big-search">
+          <span>⌕</span>
+          <input id="search" autocomplete="off" placeholder="e.g. client refused to pay">
+          <kbd>ENTER</kbd>
+          <button id="clearSearch">×</button>
+        </div>
+        <div class="quick-row">
+          <span>Quick search:</span>
+          <button data-query="payment">Payment</button>
+          <button data-query="client unreachable">Client unreachable</button>
+          <button data-query="delivery">Delivery</button>
+          <button data-query="cancelled">Cancelled</button>
+        </div>
+      </div>
+
+      <div class="results-toolbar">
+        <div><strong>Available macros</strong><span id="resultCount"></span></div>
+        <select id="categoryFilter"><option value="">All categories</option></select>
+      </div>
+      <div id="results" class="macro-grid"></div>
+      <div id="emptyState" class="empty hidden">
+        <div class="empty-icon">⌕</div><h3>No matching macros</h3><p>Try a broader search or another keyword.</p>
+      </div>
+    </section>
+
+    <section id="manageView" class="view">
+      <div class="manage-header">
+        <div><h2>Manage Macros</h2><p>Add, update, organize, or remove shared support responses.</p></div>
+        <div class="manage-stat"><strong id="macroCount">0</strong><span>Total macros</span></div>
+      </div>
+      <div class="manage-layout">
+        <div class="editor-card">
+          <div class="card-title"><div><span class="section-kicker">MACRO EDITOR</span><h3 id="formTitle">Add New Macro</h3></div><button id="newBtn" class="ghost small">Clear</button></div>
+          <form id="macroForm">
+            <input type="hidden" id="macroId">
+            <label>Macro title</label><input id="title" required placeholder="e.g. Client Refused to Pay">
+            <div class="two-col">
+              <div><label>Category</label><input id="category" placeholder="Payment"></div>
+              <div><label>Search keywords</label><input id="keywords" placeholder="payment, unpaid, handover"></div>
+            </div>
+            <label>Situation / when to use</label><textarea id="situation" rows="3" placeholder="Describe when an agent should use this macro"></textarea>
+            <label>Ready-to-send response</label><textarea id="macro" rows="9" required placeholder="Enter the support response..."></textarea>
+            <div class="form-actions"><button type="button" id="cancelBtn" class="ghost">Cancel</button><button type="submit" class="primary" id="saveBtn">Save Macro</button></div>
+          </form>
+        </div>
+        <div class="manage-card">
+          <div class="card-title"><div><span class="section-kicker">LIBRARY</span><h3>Your shared macros</h3></div></div>
+          <div id="manageList"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="toast" class="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
