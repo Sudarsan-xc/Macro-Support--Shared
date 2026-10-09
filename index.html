@@ -3,79 +3,559 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Support Macro Console</title>
-<link rel="stylesheet" href="style.css">
+<title>MacroDesk · Support Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* MacroDesk — design tokens */
+:root {
+  --ink: #0d2038;
+  --ink-2: #162f4d;
+  --ink-3: #213f63;
+  --paper: #f1f4f8;
+  --card: #ffffff;
+  --line: #e0e6ee;
+  --text: #13202f;
+  --muted: #5d6e82;
+  --accent: #0a8f8a;
+  --accent-dark: #077671;
+  --accent-soft: #e0f3f2;
+  --tape: #f5b301;
+  --danger: #c9372c;
+  --radius: 14px;
+  --font-body: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Bricolage Grotesque", "Instrument Sans", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3 { font-family: var(--font-head); margin: 0; letter-spacing: -0.01em; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.hidden { display: none !important; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Buttons & inputs ---------- */
+.primary, .ghost {
+  border-radius: 10px; padding: 9px 16px; font-weight: 600; border: 1px solid transparent;
+  transition: background .15s, border-color .15s, transform .05s;
+}
+.primary { background: var(--accent); color: #fff; }
+.primary:hover { background: var(--accent-dark); }
+.primary:active, .ghost:active { transform: translateY(1px); }
+.ghost { background: #fff; border-color: var(--line); color: var(--text); }
+.ghost:hover { border-color: #c5cfdb; background: #f8fafc; }
+.ghost.small { padding: 6px 12px; font-size: 13px; }
+.file-btn { display: inline-flex; align-items: center; cursor: pointer; }
+.file-btn input { display: none; }
+
+label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; color: #2c3d52; }
+input[type=text], input[type=email], input[type=password], input:not([type]), textarea, select {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff;
+  transition: border-color .15s, box-shadow .15s;
+}
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(10,143,138,.15); }
+textarea { resize: vertical; line-height: 1.55; }
+
+/* ---------- Brand ---------- */
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand-mark {
+  width: 40px; height: 40px; border-radius: 11px; background: var(--tape); color: var(--ink);
+  display: grid; place-items: center; font-family: var(--font-head); font-weight: 700; font-size: 20px;
+}
+.brand strong { display: block; font-family: var(--font-head); font-size: 17px; line-height: 1.15; }
+.brand span { display: block; font-size: 12px; opacity: .7; }
+.brand-light { color: #fff; }
+
+/* ---------- Login ---------- */
+.login-screen { min-height: 100vh; display: grid; grid-template-columns: 1.1fr 1fr; background: #fff; }
+
+.login-art {
+  position: relative; overflow: hidden; background: var(--ink); color: #fff;
+  padding: 44px clamp(32px, 5vw, 72px); display: flex; flex-direction: column; justify-content: space-between; gap: 28px;
+}
+.art-grid {
+  position: absolute; inset: 0; opacity: .5; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 60% 45%, #000 20%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse at 60% 45%, #000 20%, transparent 75%);
+  animation: grid-drift 24s linear infinite;
+}
+@keyframes grid-drift { to { background-position: 44px 44px, 44px 44px; } }
+.art-brand, .route-wrap, .login-quote { position: relative; z-index: 1; }
+
+.route-wrap { position: relative; width: 100%; max-width: 640px; margin: 0 auto; }
+.route { width: 100%; height: auto; overflow: visible; }
+.route-base { stroke: var(--ink-3); stroke-width: 3; stroke-linecap: round; }
+.route-flow { stroke: var(--tape); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 3 14; animation: flow 1.4s linear infinite; opacity: .9; }
+@keyframes flow { to { stroke-dashoffset: -34; } }
+
+.node .dot { fill: var(--ink); stroke: #fff; stroke-width: 3; }
+.node .ring { fill: none; stroke: var(--tape); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: ping 2.8s ease-out infinite; }
+.n2 .ring { animation-delay: .7s; } .n3 .ring { animation-delay: 1.4s; } .n4 .ring { animation-delay: 2.1s; }
+@keyframes ping { 0% { transform: scale(.8); opacity: .9; } 80%, 100% { transform: scale(3); opacity: 0; } }
+.lbl { fill: #b8c8dc; font-size: 14px; font-weight: 500; font-family: var(--font-body); }
+
+.parcel rect { fill: var(--tape); }
+.parcel path { stroke: var(--ink); stroke-width: 2.5; }
+.parcel {
+  offset-path: path("M40 300 C 150 300, 140 150, 260 160 S 400 280, 460 170 S 560 60, 585 70");
+  offset-rotate: 0deg; animation: travel 7s cubic-bezier(.45,.05,.4,.95) infinite;
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
+}
+@keyframes travel { 0% { offset-distance: 0%; } 92%, 100% { offset-distance: 100%; } }
+
+.bubbles { position: relative; height: 82px; margin-top: 8px; }
+.bubble {
+  position: absolute; left: 0; top: 0; max-width: 420px; padding: 12px 16px; border-radius: 16px 16px 16px 4px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); color: #d6e2f1; font-size: 14px; line-height: 1.45;
+  opacity: 0; transform: translateY(14px) scale(.98); animation: bubble 12s ease-in-out infinite; backdrop-filter: blur(4px);
+}
+.bubble b { display: block; color: #fff; font-size: 13px; margin-bottom: 2px; }
+.b2 { animation-delay: 4s; } .b3 { animation-delay: 8s; }
+@keyframes bubble {
+  0% { opacity: 0; transform: translateY(14px) scale(.98); }
+  6%, 28% { opacity: 1; transform: none; }
+  34%, 100% { opacity: 0; transform: translateY(-10px) scale(.98); }
+}
+
+.login-quote h2 { font-size: clamp(30px, 3.2vw, 46px); line-height: 1.06; max-width: 520px; }
+.login-quote p { margin: 14px 0 0; max-width: 440px; opacity: .72; font-size: 16px; }
+
+.login-panel { display: grid; place-items: center; padding: 40px 28px; background: var(--paper); position: relative; }
+.login-card {
+  width: 100%; max-width: 410px; background: #fff; border: 1px solid var(--line); border-radius: 22px;
+  padding: 38px 34px 30px; box-shadow: 0 30px 60px -36px rgba(13,32,56,.45);
+}
+.login-card > * { animation: rise .6s cubic-bezier(.2,.8,.2,1) both; }
+.login-card > :nth-child(1) { animation-delay: .05s; } .login-card > :nth-child(2) { animation-delay: .12s; }
+.login-card > :nth-child(3) { animation-delay: .19s; } .login-card > :nth-child(4) { animation-delay: .26s; }
+.login-card > :nth-child(5) { animation-delay: .33s; }
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+.login-brand-mobile { display: none; margin-bottom: 22px; }
+.login-brand-mobile span { color: var(--muted); opacity: 1; }
+.login-card h1 { font-size: 32px; line-height: 1.1; }
+.login-sub { color: var(--muted); margin: 8px 0 26px; }
+
+.login-card .field { position: relative; margin-bottom: 16px; }
+.login-card .field input {
+  width: 100%; height: 56px; padding: 22px 46px 6px 16px; border: 1.5px solid var(--line); border-radius: 13px;
+  background: #fafbfd; font-size: 15.5px;
+}
+.login-card .field label {
+  position: absolute; left: 16px; top: 17px; margin: 0; font-size: 15px; font-weight: 500; color: var(--muted);
+  pointer-events: none; transform-origin: left top; transition: transform .18s ease, color .18s ease;
+}
+.login-card .field input:focus + label,
+.login-card .field input:not(:placeholder-shown) + label { transform: translateY(-9px) scale(.78); }
+.login-card .field input:focus + label { color: var(--accent-dark); }
+.login-card .field input:focus { background: #fff; }
+.login-card .field > svg { position: absolute; right: 15px; top: 18px; width: 20px; height: 20px; color: #9aa9bb; pointer-events: none; }
+
+.pw-toggle { position: absolute; right: 8px; top: 8px; width: 40px; height: 40px; border: 0; background: transparent; border-radius: 10px; color: #8697ab; display: grid; place-items: center; }
+.pw-toggle:hover { background: #eef2f6; color: var(--text); }
+.pw-toggle svg { width: 20px; height: 20px; }
+.pw-toggle .eye-off { display: none; }
+.pw-toggle.on .eye-off { display: block; }
+.pw-toggle.on .eye-on { display: none; }
+
+.login-btn {
+  position: relative; width: 100%; margin-top: 8px; padding: 0; height: 52px; font-size: 16px; border-radius: 13px;
+  display: flex; align-items: center; justify-content: center; gap: 10px; overflow: hidden;
+  box-shadow: 0 14px 24px -14px rgba(10,143,138,.9);
+}
+.login-btn svg { width: 19px; height: 19px; transition: transform .2s; }
+.login-btn:hover svg { transform: translateX(5px); }
+.login-btn::after {
+  content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent); transform: skewX(-18deg);
+}
+.login-btn:hover::after { animation: sheen .8s ease; }
+@keyframes sheen { to { left: 130%; } }
+.login-btn:disabled { opacity: .85; cursor: progress; }
+.login-btn:disabled svg { display: none; }
+.login-btn:disabled span::after {
+  content: ""; display: inline-block; width: 14px; height: 14px; margin-left: 10px; vertical-align: -2px;
+  border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.login-error {
+  margin-top: 14px; padding: 11px 14px; border-radius: 12px; background: #fdecea; color: var(--danger); font-size: 14px;
+  border: 1px solid #f6cdc8; animation: shake .45s ease;
+}
+@keyframes shake { 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+.login-help { margin: 22px 0 0; font-size: 13.5px; color: var(--muted); text-align: center; }
+
+@media (max-width: 900px) {
+  .login-screen { grid-template-columns: 1fr; }
+  .login-art { display: none; }
+  .login-brand-mobile { display: flex; }
+  .login-panel { min-height: 100vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-screen *, .login-screen *::before, .login-screen *::after { animation: none !important; }
+  .bubble.b1 { opacity: 1; transform: none; }
+  .parcel { offset-distance: 50%; }
+}
+
+/* ---------- App shell ---------- */
+.app-shell { display: grid; grid-template-columns: 272px 1fr; min-height: 100vh; }
+.sidebar {
+  background: var(--ink); color: #fff; padding: 24px 16px; display: flex; flex-direction: column; gap: 22px;
+  position: sticky; top: 0; height: 100vh; overflow: hidden;
+}
+.sidebar .brand { padding: 0 8px; }
+nav { display: grid; gap: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px; background: transparent; border: 0; color: #b8c8dc;
+  padding: 10px 12px; border-radius: 10px; text-align: left; font-weight: 500; transition: background .15s, color .15s;
+}
+.nav-item:hover { background: var(--ink-2); color: #fff; }
+.nav-item.active { background: var(--ink-3); color: #fff; box-shadow: inset 3px 0 0 var(--tape); }
+
+.side-section { flex: 1; min-height: 0; overflow-y: auto; padding-right: 2px; scrollbar-width: thin; scrollbar-color: #2c4b72 transparent; }
+.side-label { font-size: 12.5px; font-weight: 600; color: #8ea4bf; padding: 0 12px 8px; }
+.side-cats { display: grid; gap: 2px; }
+.cat-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%; background: transparent; border: 0; color: #c7d4e5;
+  padding: 8px 12px; border-radius: 9px; text-align: left; transition: background .15s;
+}
+.cat-btn:hover { background: var(--ink-2); }
+.cat-btn.active { background: var(--ink-3); color: #fff; font-weight: 600; }
+.cat-dot { width: 9px; height: 9px; border-radius: 50%; background: hsl(var(--h, 200) 70% 60%); flex: none; }
+.cat-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-count { font-size: 12px; padding: 1px 8px; border-radius: 99px; background: rgba(255,255,255,.1); color: #dbe6f3; }
+
+.sidebar-bottom { display: grid; gap: 10px; flex: none; }
+.logout-btn { background: transparent; border: 1px solid var(--ink-3); color: #c7d4e5; padding: 9px; border-radius: 10px; font-weight: 500; }
+.logout-btn:hover { background: var(--ink-2); color: #fff; }
+
+/* ---------- Main ---------- */
+.main { padding: 28px 40px 60px; min-width: 0; }
+.topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; flex-wrap: wrap; margin-bottom: 26px; }
+.title-block h1 { font-size: 30px; }
+.title-block p { margin: 4px 0 0; color: var(--muted); }
+.top-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sync-status { font-size: 13px; color: var(--muted); display: inline-flex; align-items: center; gap: 7px; }
+.sync-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #b3bfcd; }
+.sync-status.ok::before { background: #1fb36b; }
+.sync-status.err::before { background: var(--danger); }
+.user-email { font-size: 13px; color: var(--muted); max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.view { display: none; }
+.active-view { display: block; }
+
+/* ---------- Search ---------- */
+.search-hero { max-width: 860px; }
+.big-search {
+  display: flex; align-items: center; gap: 12px; background: #fff; border: 1.5px solid var(--line); border-radius: 16px;
+  padding: 6px 16px; box-shadow: 0 10px 30px -18px rgba(13,32,56,.35); transition: border-color .15s, box-shadow .15s;
+}
+.big-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(10,143,138,.14), 0 10px 30px -18px rgba(13,32,56,.35); }
+.big-search svg { width: 22px; height: 22px; color: var(--muted); }
+.big-search input { border: 0; box-shadow: none !important; padding: 15px 0; font-size: 17px; background: transparent; flex: 1; }
+.big-search input:focus { box-shadow: none; }
+.big-search kbd { font-family: inherit; font-size: 12px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; padding: 1px 8px; }
+#clearSearch { border: 0; background: #eef2f6; width: 26px; height: 26px; border-radius: 50%; font-size: 17px; line-height: 1; color: var(--muted); }
+#clearSearch:hover { background: #e0e6ee; }
+
+.quick-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; font-size: 13.5px; color: var(--muted); }
+.quick-row button { background: transparent; border: 1px dashed #b9c5d3; border-radius: 99px; padding: 4px 13px; color: var(--text); transition: all .15s; }
+.quick-row button:hover { border-style: solid; border-color: var(--accent); color: var(--accent-dark); background: var(--accent-soft); }
+
+/* Category chips */
+.chips { display: flex; gap: 8px; overflow-x: auto; padding: 22px 2px 6px; scrollbar-width: thin; }
+.chip {
+  display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; background: #fff; border: 1px solid var(--line);
+  border-radius: 99px; padding: 8px 15px; font-weight: 500; transition: all .15s;
+}
+.chip:hover { border-color: #b9c5d3; }
+.chip .cat-dot { width: 8px; height: 8px; }
+.chip small { font-size: 12px; color: var(--muted); }
+.chip.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chip.active small { color: #b8c8dc; }
+
+.results-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 22px 0 14px; }
+.results-toolbar strong { font-family: var(--font-head); font-size: 20px; }
+.results-toolbar span { margin-left: 10px; color: var(--muted); font-size: 14px; }
+.results-toolbar select { width: auto; min-width: 190px; display: none; }
+
+/* Macro cards */
+.macro-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 18px 16px;
+  display: flex; flex-direction: column; gap: 10px; cursor: pointer; position: relative;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+}
+.card::before {
+  content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 3px; border-radius: 0 3px 3px 0;
+  background: hsl(var(--h, 200) 65% 52%);
+}
+.card:hover { border-color: #c3cedb; box-shadow: 0 14px 30px -20px rgba(13,32,56,.45); transform: translateY(-2px); }
+.card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card h3 { font-size: 18px; line-height: 1.25; }
+.card .when { margin: 0; color: var(--muted); font-size: 14px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card .preview {
+  margin: 0; font-size: 13.5px; color: #3d4f64; background: #f6f8fb; border-radius: 10px; padding: 10px 12px;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 4px; font-size: 13px; color: var(--muted); }
+.copy-mini { background: var(--accent-soft); color: var(--accent-dark); border: 0; border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 13px; }
+.copy-mini:hover { background: #cdebe9; }
+mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; }
+
+.tag {
+  display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 600; padding: 3px 11px; border-radius: 99px;
+  color: hsl(var(--h, 200) 55% 28%); background: hsl(var(--h, 200) 70% 92%);
+}
+.tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: hsl(var(--h, 200) 65% 48%); }
+
+.empty { text-align: center; padding: 60px 20px; background: #fff; border: 1px dashed #c3cedb; border-radius: var(--radius); }
+.empty-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-dark); display: grid; place-items: center; margin: 0 auto 14px; }
+.empty-icon svg { width: 26px; height: 26px; }
+.empty h3 { font-size: 20px; }
+.empty p { color: var(--muted); margin: 6px 0 18px; }
+
+/* ---------- Manage ---------- */
+.manage-header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; }
+.manage-header h2 { font-size: 24px; }
+.manage-header p { margin: 4px 0 0; color: var(--muted); }
+.manage-stat { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 22px; text-align: center; }
+.manage-stat strong { display: block; font-family: var(--font-head); font-size: 28px; line-height: 1.1; }
+.manage-stat span { font-size: 12.5px; color: var(--muted); }
+.manage-layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.editor-card, .manage-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; }
+.editor-card { position: sticky; top: 20px; }
+.card-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.card-title h3 { font-size: 19px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+.manage-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.manage-item:first-child { border-top: 0; }
+.manage-item .info { flex: 1; min-width: 0; }
+.manage-item .info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.manage-item .row-actions { display: flex; gap: 6px; }
+.manage-item button { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 5px 11px; font-size: 13px; font-weight: 500; }
+.manage-item button:hover { background: #f5f8fb; }
+.manage-item button.del { color: var(--danger); }
+.manage-item button.del:hover { background: #fdecea; border-color: #f4c7c2; }
+.manage-empty { color: var(--muted); padding: 20px 0; text-align: center; }
+
+/* ---------- Drawer ---------- */
+.drawer-overlay { position: fixed; inset: 0; background: rgba(9,20,34,.45); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; }
+.drawer-overlay.open { opacity: 1; pointer-events: auto; }
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100%); background: #fff; z-index: 50;
+  display: flex; flex-direction: column; transform: translateX(102%); transition: transform .25s cubic-bezier(.2,.8,.2,1);
+  box-shadow: -24px 0 60px -30px rgba(9,20,34,.5);
+}
+.drawer.open { transform: none; }
+.drawer-head { display: flex; justify-content: space-between; align-items: center; padding: 18px 24px; border-bottom: 1px solid var(--line); }
+.icon-btn { width: 34px; height: 34px; border-radius: 50%; border: 0; background: #eef2f6; font-size: 20px; line-height: 1; color: var(--muted); }
+.icon-btn:hover { background: #e0e6ee; }
+.drawer-body { padding: 24px; overflow-y: auto; flex: 1; }
+.drawer-body h2 { font-size: 26px; line-height: 1.2; margin-bottom: 16px; }
+.when-box { background: #f6f8fb; border-left: 3px solid var(--tape); border-radius: 0 10px 10px 0; padding: 12px 14px; color: #3d4f64; font-size: 14px; margin-bottom: 22px; }
+.when-box b { display: block; color: var(--text); margin-bottom: 2px; }
+.reply-label { font-weight: 600; font-size: 13px; color: #2c3d52; margin-bottom: 8px; }
+.reply-box { white-space: pre-wrap; border: 1px solid var(--line); border-radius: 12px; padding: 18px; background: #fcfdfe; line-height: 1.65; max-width: 70ch; }
+.drawer-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 24px; border-top: 1px solid var(--line); background: #fff; }
+.drawer-foot .primary { min-width: 160px; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 24px); background: var(--ink); color: #fff;
+  padding: 11px 20px; border-radius: 12px; font-weight: 500; opacity: 0; pointer-events: none; z-index: 80;
+  transition: opacity .2s, transform .2s; box-shadow: 0 16px 36px -14px rgba(9,20,34,.6);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1000px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; height: auto; flex-direction: row; align-items: center; flex-wrap: wrap; padding: 14px 16px; gap: 12px; }
+  .side-section,   nav { display: flex; margin-left: auto; }
+  .sidebar-bottom { margin-left: 0; }
+  .main { padding: 22px 18px 50px; }
+  .manage-layout { grid-template-columns: 1fr; }
+  .editor-card { position: static; }
+  .results-toolbar select { display: block; }
+}
+@media (max-width: 860px) {
+  .login-screen { grid-template-columns: 1fr; }
+  .login-art { display: none; }
+}
+@media (max-width: 560px) {
+  .macro-grid { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .big-search kbd { display: none; }
+  .user-email { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+</style>
 </head>
 <body>
+
+<!-- ============ LOGIN ============ -->
 <div id="loginScreen" class="login-screen">
-  <div class="login-card">
-    <div class="brand login-brand">
+
+  <!-- Animated route panel -->
+  <section class="login-art" aria-hidden="true">
+    <div class="art-grid"></div>
+
+    <div class="brand brand-light art-brand">
       <div class="brand-mark">M</div>
       <div><strong>MacroDesk</strong><span>Support Console</span></div>
     </div>
-    <h1>Agent sign in</h1>
-    <p>Sign in to access the shared courier support macro library.</p>
-    <form id="loginForm">
-      <label>Email</label>
-      <input id="loginEmail" type="email" required placeholder="agent@company.com" autocomplete="username">
-      <label>Password</label>
-      <input id="loginPassword" type="password" required placeholder="Password" autocomplete="current-password">
-      <button class="primary login-btn" type="submit">Sign in</button>
-      <div id="loginError" class="login-error hidden"></div>
-    </form>
-    <p class="login-help">Agents must be added to the Supabase project by an administrator.</p>
-  </div>
+
+    <div class="route-wrap">
+      <svg class="route" viewBox="0 0 620 360" fill="none">
+        <path class="route-base" d="M40 300 C 150 300, 140 150, 260 160 S 400 280, 460 170 S 560 60, 585 70"/>
+        <path class="route-flow" d="M40 300 C 150 300, 140 150, 260 160 S 400 280, 460 170 S 560 60, 585 70"/>
+
+        <g class="node n1"><circle class="ring" cx="40" cy="300" r="10"/><circle class="dot" cx="40" cy="300" r="7"/></g>
+        <g class="node n2"><circle class="ring" cx="260" cy="160" r="10"/><circle class="dot" cx="260" cy="160" r="7"/></g>
+        <g class="node n3"><circle class="ring" cx="460" cy="170" r="10"/><circle class="dot" cx="460" cy="170" r="7"/></g>
+        <g class="node n4"><circle class="ring" cx="585" cy="70" r="10"/><circle class="dot" cx="585" cy="70" r="7"/></g>
+
+        <text class="lbl" x="40" y="335" text-anchor="start">Pickup</text>
+        <text class="lbl" x="260" y="135" text-anchor="middle">Hub</text>
+        <text class="lbl" x="460" y="205" text-anchor="middle">Out for delivery</text>
+        <text class="lbl" x="585" y="48" text-anchor="end">Delivered</text>
+
+        <g class="parcel">
+          <rect x="-11" y="-11" width="22" height="22" rx="5"/>
+          <path d="M-11 -2h22M0 -11v9"/>
+        </g>
+      </svg>
+
+      <div class="bubbles">
+        <div class="bubble b1"><b>Client unreachable</b>Hi, we tried to reach you for your delivery today…</div>
+        <div class="bubble b2"><b>Payment pending</b>Thanks for your patience. The payment is still open on…</div>
+        <div class="bubble b3"><b>Delivery delayed</b>We're sorry for the wait. Your parcel is now…</div>
+      </div>
+    </div>
+
+    <div class="login-quote">
+      <h2>The right reply, one search away.</h2>
+      <p>Every approved courier response in one shared library, always up to date for the whole team.</p>
+    </div>
+  </section>
+
+  <!-- Form panel -->
+  <section class="login-panel">
+    <div class="login-card">
+      <div class="brand login-brand-mobile">
+        <div class="brand-mark">M</div>
+        <div><strong>MacroDesk</strong><span>Support Console</span></div>
+      </div>
+
+      <h1>Welcome back</h1>
+      <p class="login-sub">Sign in to open the shared courier support macro library.</p>
+
+      <form id="loginForm">
+        <div class="field">
+          <input id="loginEmail" type="email" required placeholder=" " autocomplete="username">
+          <label for="loginEmail">Work email</label>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg>
+        </div>
+
+        <div class="field">
+          <input id="loginPassword" type="password" required placeholder=" " autocomplete="current-password">
+          <label for="loginPassword">Password</label>
+          <button type="button" id="togglePw" class="pw-toggle" aria-label="Show password">
+            <svg class="eye-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 6.1A9.8 9.8 0 0 1 12 6c6.4 0 10 6 10 6a17 17 0 0 1-3.2 3.9M6.6 7.7A16.5 16.5 0 0 0 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.5-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+          </button>
+        </div>
+
+        <button class="primary login-btn" type="submit">
+          <span>Sign in</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+        <div id="loginError" class="login-error hidden" role="alert"></div>
+      </form>
+
+      <p class="login-help">Need access? Ask an administrator to add you to the team.</p>
+    </div>
+  </section>
 </div>
 
+<!-- ============ APP ============ -->
 <div id="appShell" class="app-shell hidden">
   <aside class="sidebar">
-    <div class="brand">
+    <div class="brand brand-light">
       <div class="brand-mark">M</div>
       <div><strong>MacroDesk</strong><span>Shared Support Console</span></div>
     </div>
+
     <nav>
-      <button class="nav-item active" data-view="searchView">⌕ <span>Macro Search</span></button>
-      <button class="nav-item" data-view="manageView">＋ <span>Manage Macros</span></button>
+      <button class="nav-item active" data-view="searchView">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <span>Find a macro</span>
+      </button>
+      <button class="nav-item" data-view="manageView">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span>Manage macros</span>
+      </button>
     </nav>
+
     <div class="side-section">
-      <div class="side-label">CATEGORIES</div>
-      <div id="sideCategories"></div>
+      <div class="side-label">Categories</div>
+      <div id="sideCategories" class="side-cats"></div>
     </div>
+
     <div class="sidebar-bottom">
-      <div class="tip"><b>Shared library</b><br>Changes are saved to the cloud and are visible to all signed-in agents.</div>
-      <button id="logoutBtn" class="ghost logout-btn">Sign out</button>
+      <button id="logoutBtn" class="logout-btn">Sign out</button>
     </div>
   </aside>
 
   <main class="main">
     <header class="topbar">
-      <div>
-        <div class="eyebrow">COURIER SUPPORT</div>
-        <h1 id="pageTitle">Macro Search</h1>
+      <div class="title-block">
+        <h1 id="pageTitle">Find a macro</h1>
+        <p id="pageSub">Search by situation, keyword, category, or wording.</p>
       </div>
       <div class="top-actions">
         <span id="syncStatus" class="sync-status">Connecting…</span>
         <span id="userEmail" class="user-email"></span>
         <button id="exportBtn" class="ghost">Export</button>
         <label class="ghost file-btn">Import<input id="importFile" type="file" accept=".json"></label>
-        <button id="newTopBtn" class="primary">＋ New Macro</button>
+        <button id="newTopBtn" class="primary">+ New macro</button>
       </div>
     </header>
 
+    <!-- SEARCH VIEW -->
     <section id="searchView" class="view active-view">
       <div class="search-hero">
-        <div class="search-heading">
-          <h2>What do you need to respond to?</h2>
-          <p>Search by situation, keyword, category, or macro wording.</p>
-        </div>
         <div class="big-search">
-          <span>⌕</span>
-          <input id="search" autocomplete="off" placeholder="e.g. client refused to pay">
-          <kbd>ENTER</kbd>
-          <button id="clearSearch">×</button>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="search" autocomplete="off" placeholder="What do you need to respond to? e.g. client refused to pay" aria-label="Search macros">
+          <button id="clearSearch" class="hidden" aria-label="Clear search">×</button>
+          <kbd title="Press / to focus search">/</kbd>
         </div>
         <div class="quick-row">
-          <span>Quick search:</span>
+          <span>Try:</span>
           <button data-query="payment">Payment</button>
           <button data-query="client unreachable">Client unreachable</button>
           <button data-query="delivery">Delivery</button>
@@ -83,45 +563,82 @@
         </div>
       </div>
 
+      <div id="categoryChips" class="chips" role="tablist" aria-label="Filter by category"></div>
+
       <div class="results-toolbar">
-        <div><strong>Available macros</strong><span id="resultCount"></span></div>
-        <select id="categoryFilter"><option value="">All categories</option></select>
+        <div><strong id="resultTitle">All macros</strong><span id="resultCount"></span></div>
+        <select id="categoryFilter" aria-label="Category"><option value="">All categories</option></select>
       </div>
+
       <div id="results" class="macro-grid"></div>
       <div id="emptyState" class="empty hidden">
-        <div class="empty-icon">⌕</div><h3>No matching macros</h3><p>Try a broader search or another keyword.</p>
+        <div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+        <h3>No matching macros</h3>
+        <p>Try fewer words, or pick a different category.</p>
+        <button id="resetFilters" class="ghost">Show all macros</button>
       </div>
     </section>
 
+    <!-- MANAGE VIEW -->
     <section id="manageView" class="view">
       <div class="manage-header">
-        <div><h2>Manage Macros</h2><p>Add, update, organize, or remove shared support responses.</p></div>
+        <div><h2>Your shared macros</h2><p>Add, update, organize, or remove support responses for the whole team.</p></div>
         <div class="manage-stat"><strong id="macroCount">0</strong><span>Total macros</span></div>
       </div>
       <div class="manage-layout">
         <div class="editor-card">
-          <div class="card-title"><div><span class="section-kicker">MACRO EDITOR</span><h3 id="formTitle">Add New Macro</h3></div><button id="newBtn" class="ghost small">Clear</button></div>
+          <div class="card-title">
+            <h3 id="formTitle">Add new macro</h3>
+            <button id="newBtn" class="ghost small" type="button">Clear form</button>
+          </div>
           <form id="macroForm">
             <input type="hidden" id="macroId">
-            <label>Macro title</label><input id="title" required placeholder="e.g. Client Refused to Pay">
+            <label for="title">Macro title</label>
+            <input id="title" required placeholder="e.g. Client refused to pay">
             <div class="two-col">
-              <div><label>Category</label><input id="category" placeholder="Payment"></div>
-              <div><label>Search keywords</label><input id="keywords" placeholder="payment, unpaid, handover"></div>
+              <div><label for="category">Category</label><input id="category" placeholder="Payment" list="categoryList"><datalist id="categoryList"></datalist></div>
+              <div><label for="keywords">Search keywords</label><input id="keywords" placeholder="payment, unpaid, handover"></div>
             </div>
-            <label>Situation / when to use</label><textarea id="situation" rows="3" placeholder="Describe when an agent should use this macro"></textarea>
-            <label>Ready-to-send response</label><textarea id="macro" rows="9" required placeholder="Enter the support response..."></textarea>
-            <div class="form-actions"><button type="button" id="cancelBtn" class="ghost">Cancel</button><button type="submit" class="primary" id="saveBtn">Save Macro</button></div>
+            <label for="situation">When to use it</label>
+            <textarea id="situation" rows="3" placeholder="Describe the situation where an agent should use this macro"></textarea>
+            <label for="macro">Ready-to-send response</label>
+            <textarea id="macro" rows="9" required placeholder="Write the response exactly as the customer should read it…"></textarea>
+            <div class="form-actions">
+              <button type="button" id="cancelBtn" class="ghost">Cancel</button>
+              <button type="submit" class="primary" id="saveBtn">Save macro</button>
+            </div>
           </form>
         </div>
+
         <div class="manage-card">
-          <div class="card-title"><div><span class="section-kicker">LIBRARY</span><h3>Your shared macros</h3></div></div>
+          <div class="card-title"><h3>Library</h3></div>
           <div id="manageList"></div>
         </div>
       </div>
     </section>
   </main>
 </div>
-<div id="toast" class="toast"></div>
+
+<!-- ============ DETAIL DRAWER ============ -->
+<div id="drawerOverlay" class="drawer-overlay"></div>
+<aside id="drawer" class="drawer" aria-hidden="true" aria-label="Macro details">
+  <div class="drawer-head">
+    <span id="drawerTag" class="tag"></span>
+    <button id="drawerClose" class="icon-btn" aria-label="Close">×</button>
+  </div>
+  <div class="drawer-body">
+    <h2 id="drawerTitle"></h2>
+    <div id="drawerWhen" class="when-box"></div>
+    <div class="reply-label">Ready-to-send response</div>
+    <div id="drawerReply" class="reply-box"></div>
+  </div>
+  <div class="drawer-foot">
+    <button id="drawerEdit" class="ghost">Edit</button>
+    <button id="drawerCopy" class="primary">Copy response</button>
+  </div>
+</aside>
+
+<div id="toast" class="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
