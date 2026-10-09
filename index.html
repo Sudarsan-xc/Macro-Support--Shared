@@ -93,9 +93,7 @@ textarea { resize: vertical; line-height: 1.55; }
   background-size: 44px 44px;
   mask-image: radial-gradient(ellipse at 60% 45%, #000 20%, transparent 75%);
   -webkit-mask-image: radial-gradient(ellipse at 60% 45%, #000 20%, transparent 75%);
-  animation: grid-drift 24s linear infinite;
 }
-@keyframes grid-drift { to { background-position: 44px 44px, 44px 44px; } }
 .art-brand, .route-wrap, .login-quote { position: relative; z-index: 1; }
 
 .route-wrap { position: relative; width: 100%; max-width: 640px; margin: 0 auto; }
@@ -115,7 +113,6 @@ textarea { resize: vertical; line-height: 1.55; }
 .parcel {
   offset-path: path("M40 300 C 150 300, 140 150, 260 160 S 400 280, 460 170 S 560 60, 585 70");
   offset-rotate: 0deg; animation: travel 7s cubic-bezier(.45,.05,.4,.95) infinite;
-  filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
 }
 @keyframes travel { 0% { offset-distance: 0%; } 92%, 100% { offset-distance: 100%; } }
 
@@ -123,7 +120,7 @@ textarea { resize: vertical; line-height: 1.55; }
 .bubble {
   position: absolute; left: 0; top: 0; max-width: 420px; padding: 12px 16px; border-radius: 16px 16px 16px 4px;
   background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12); color: #d6e2f1; font-size: 14px; line-height: 1.45;
-  opacity: 0; transform: translateY(14px) scale(.98); animation: bubble 12s ease-in-out infinite; backdrop-filter: blur(4px);
+  opacity: 0; transform: translateY(14px) scale(.98); animation: bubble 12s ease-in-out infinite;
 }
 .bubble b { display: block; color: #fff; font-size: 13px; margin-bottom: 2px; }
 .b2 { animation-delay: 4s; } .b3 { animation-delay: 8s; }
@@ -165,6 +162,22 @@ textarea { resize: vertical; line-height: 1.55; }
 .login-card .field input:not(:placeholder-shown) + label { transform: translateY(-9px) scale(.78); }
 .login-card .field input:focus + label { color: var(--accent-dark); }
 .login-card .field input:focus { background: #fff; }
+.login-card .field input { font-family: var(--font-body); color: var(--text); }
+/* Browser autofill: keep the label lifted and the field looking clean */
+.login-card .field input:-webkit-autofill,
+.login-card .field input:-webkit-autofill:hover,
+.login-card .field input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text);
+  -webkit-box-shadow: 0 0 0 40px #fafbfd inset;
+  box-shadow: 0 0 0 40px #fafbfd inset;
+  caret-color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15.5px;
+  transition: background-color 9999s ease-out 0s;
+}
+.login-card .field input:-webkit-autofill + label { transform: translateY(-9px) scale(.78); }
+.secure-note { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 16px; font-size: 13px; color: var(--muted); }
+.secure-note svg { width: 15px; height: 15px; color: var(--accent-dark); }
 .login-card .field > svg { position: absolute; right: 15px; top: 18px; width: 20px; height: 20px; color: #9aa9bb; pointer-events: none; }
 
 .pw-toggle { position: absolute; right: 8px; top: 8px; width: 40px; height: 40px; border: 0; background: transparent; border-radius: 10px; color: #8697ab; display: grid; place-items: center; }
@@ -201,6 +214,8 @@ textarea { resize: vertical; line-height: 1.55; }
 }
 @keyframes shake { 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
 .login-help { margin: 22px 0 0; font-size: 13.5px; color: var(--muted); text-align: center; }
+
+.login-screen.paused *, .login-screen.paused *::before, .login-screen.paused *::after { animation-play-state: paused !important; }
 
 @media (max-width: 900px) {
   .login-screen { grid-template-columns: 1fr; }
@@ -307,6 +322,7 @@ nav { display: grid; gap: 4px; }
   content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 3px; border-radius: 0 3px 3px 0;
   background: hsl(var(--h, 200) 65% 52%);
 }
+.card { content-visibility: auto; contain-intrinsic-size: auto 240px; }
 .card:hover { border-color: #c3cedb; box-shadow: 0 14px 30px -20px rgba(13,32,56,.45); transform: translateY(-2px); }
 .card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .card h3 { font-size: 18px; line-height: 1.25; }
@@ -326,6 +342,7 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
 }
 .tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: hsl(var(--h, 200) 65% 48%); }
 
+.more-wrap { display: flex; justify-content: center; margin-top: 20px; }
 .empty { text-align: center; padding: 60px 20px; background: #fff; border: 1px dashed #c3cedb; border-radius: var(--radius); }
 .empty-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-dark); display: grid; place-items: center; margin: 0 auto 14px; }
 .empty-icon svg { width: 26px; height: 26px; }
@@ -494,6 +511,10 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
         <div id="loginError" class="login-error hidden" role="alert"></div>
+        <div class="secure-note">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          <span>Secure sign in. You'll be signed out automatically after 14 hours.</span>
+        </div>
       </form>
 
       <p class="login-help">Need access? Ask an administrator to add you to the team.</p>
@@ -571,6 +592,7 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
       </div>
 
       <div id="results" class="macro-grid"></div>
+      <div class="more-wrap"><button id="moreBtn" class="ghost hidden" type="button"></button></div>
       <div id="emptyState" class="empty hidden">
         <div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
         <h3>No matching macros</h3>
