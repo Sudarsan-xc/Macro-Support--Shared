@@ -19,7 +19,7 @@ function cleanAIReply(text) {
   let history = [], busy = false, client;
   const error = message => { el('error').textContent = message || ''; };
   try {
-    if (!window.supabase || !url || !key || !worker) throw Error('AI configuration missing. Check ai-settings.js.');
+    if (!window.supabase || !url || !key || !worker) throw Error('AI configuration missing. Check ai-settings.js and config.js.');
     client = window.supabase.createClient(url, key);
   } catch (e) { error(e.message); return; }
 
@@ -57,7 +57,7 @@ function cleanAIReply(text) {
       const response = await fetch(worker, {
         method: 'POST',
         headers: {'Content-Type':'application/json', 'Authorization':'Bearer ' + session.access_token},
-        body: JSON.stringify({message, history: prior, action:'chat'})
+        body: JSON.stringify({message, history: prior, action:'chat', language: el('language')?.value || 'English', tone: el('tone')?.value || 'professional'})
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw Error(data.error || `Worker error ${response.status}`);

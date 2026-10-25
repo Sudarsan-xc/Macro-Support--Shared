@@ -1420,3 +1420,13 @@ body.mdai-drawer-open {overflow:hidden;}
 #mdaiOverlay:not(.open) { opacity:0 !important; pointer-events:none !important; }
 @media(max-width:1000px) { #appShell { display:block !important; } }
 @media(max-width:700px) { #searchView #results {grid-template-columns:minmax(0,1fr) !important;} }
+
+/* AI language and tone selectors in popup header */
+.mdai-drawer .mdai-chat-header{flex-wrap:wrap!important;}
+.mdai-drawer .mdai-chat-header>div:first-child{flex:1 1 155px;min-width:145px;}
+.mdai-drawer .mdai-preferences{display:flex;align-items:center;gap:8px;flex:1 1 210px;min-width:0;}
+.mdai-drawer .mdai-pref{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1 1 0;font-size:11px;font-weight:600;color:#64748b;}
+.mdai-drawer .mdai-pref select{width:100%;min-width:0;max-width:100%;border:1px solid #d5dee9;border-radius:9px;background:#f8fafc;color:#10233b;padding:8px 6px;font-size:12px;font-weight:600;cursor:pointer;}
+.mdai-drawer .mdai-pref select:focus-visible{outline:2px solid #0d9488;outline-offset:2px;}
+.mdai-drawer .mdai-head-actions{margin-left:auto;}
+@media(max-width:560px){.mdai-drawer .mdai-preferences{order:3;flex:1 1 100%;}.mdai-drawer .mdai-chat-header>div:first-child{flex:1 1 auto;}.mdai-drawer .mdai-head-actions{order:2;}}
