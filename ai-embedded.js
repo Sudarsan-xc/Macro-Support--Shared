@@ -1,341 +1,278 @@
-function cleanAIReply(text) {
-  return String(text || "")
-    .trim()
-    .replace(/^Ready\s*\n+/i, "")
-    .replace(
-      /^Here is (?:a |the )?(?:professional|polite|friendly|concise|short|ready-to-copy|ready-to-send|suggested|refined|polished|improved|empathetic|clear|courteous|formal|informal|support)[^\n:]{0,160}(?:\s+based on your instructions)?\s*:\s*/i,
-      "",
-    )
-    .replace(/^\*{1,3}(?=\S)/, "")
-    .replace(/\*{1,3}\s*$/, "")
-    .trim();
-}
-
+/* MacroDesk: private per-agent 24-hour chat, Supabase RLS + RPC.
+   Requires ai-settings.js, Supabase JS v2, and the existing popup IDs. */
 (() => {
-  const el = (id) => document.getElementById("mdai-" + id);
+  const el = id => document.getElementById('mdai-' + id);
+  const thread = el('thread'), input = el('message'), send = el('generate');
+  const drawer = document.getElementById('splitAiPanel');
+  if (!thread || !input || !send || !drawer) return;
 
   const settings = window.MACRODESK_AI_SETTINGS || {};
   const main = window.MACRODESK_CONFIG || {};
-
   const url = settings.supabaseUrl || main.supabaseUrl;
   const key = settings.supabaseAnonKey || main.supabasePublishableKey;
-  const worker = (settings.workerUrl || "").replace(/\/$/, "");
+  const worker = String(settings.workerUrl || '').replace(/\/$/, '');
+  const error = message => { if (el('error')) el('error').textContent = message || ''; };
 
-  const thread = el("thread");
-  const input = el("message");
-  const send = el("generate");
-
-  if (!thread || !input || !send) return;
-
-  let history = [];
-  let busy = false;
-  let client;
-  let activeController = null;
-  let requestId = 0;
-  let sessionUserId = null;
-  let idleTimer = null;
-
-  const drawer = document.getElementById("splitAiPanel");
-
-  const error = (message) => {
-    const box = el("error");
-    if (box) box.textContent = message || "";
-  };
-
-  try {
-    if (!window.supabase || !url || !key || !worker) {
-      throw Error(
-        "AI configuration missing. Check ai-settings.js and config.js.",
-      );
-    }
-
-    client = window.supabase.createClient(url, key);
-  } catch (e) {
-    error(e.message);
+  if (!window.supabase || !url || !key || !worker) {
+    error('AI configuration missing. Check ai-settings.js and config.js.');
     return;
   }
+  const client = window.supabase.createClient(url, key);
+  let history = [];
+  let userId = null;
+  let expiresAt = null;
+  let busy = false;
+  let controller = null;
+  let generation = 0;
+  let writeQueue = Promise.resolve();
+  let expiryTimer = null;
 
-  // Display chat messages
-  function add(role, content, copying = false) {
-    thread.querySelector(".mdai-welcome")?.remove();
+  function cleanReply(text) {
+    return String(text || '').trim()
+      .replace(/^Ready\s*\n+/i, '')
+      .replace(/^Here is (?:a |the )?[^\n:]{0,160}:\s*/i, '')
+      .trim();
+  }
 
-    const turn = document.createElement("div");
-    turn.className = "mdai-turn " + role;
+  function showWelcome(message = 'Your private AI conversation is ready.') {
+    thread.replaceChildren();
+    const welcome = document.createElement('div');
+    welcome.className = 'mdai-welcome';
+    welcome.textContent = message;
+    thread.append(welcome);
+  }
 
-    const bubble = document.createElement("div");
-    bubble.className = "mdai-bubble";
-
-    bubble.textContent = role === "assistant" ? cleanAIReply(content) : content;
-
+  function appendMessage(role, content, copyable = false) {
+    thread.querySelector('.mdai-welcome')?.remove();
+    const turn = document.createElement('div');
+    turn.className = 'mdai-turn ' + role;
+    const bubble = document.createElement('div');
+    bubble.className = 'mdai-bubble';
+    bubble.textContent = content;
     turn.append(bubble);
-
-    if (role === "assistant" && copying) {
-      addCopyButton(turn, bubble);
+    if (role === 'assistant' && copyable) {
+      const copy = document.createElement('button');
+      copy.type = 'button';
+      copy.className = 'mdai-copy';
+      copy.title = 'Copy response';
+      copy.setAttribute('aria-label', 'Copy response');
+      copy.innerHTML = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 2 0 0 0 2 2h2"/></svg>';
+      copy.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(bubble.textContent);
+          copy.title = 'Copied!';
+          copy.setAttribute('aria-label', 'Copied!');
+        } catch { error('Copy failed. Please copy the text manually.'); }
+      });
+      turn.append(copy);
     }
-
     thread.append(turn);
     thread.scrollTop = thread.scrollHeight;
-
     return { turn, bubble };
   }
 
-  // Two-overlapping-squares copy button
-  function addCopyButton(turn, bubble) {
-    const copy = document.createElement("button");
-
-    copy.type = "button";
-    copy.className = "mdai-copy";
-    copy.title = "Copy response";
-    copy.setAttribute("aria-label", "Copy response");
-
-    copy.innerHTML = `
-      <svg width="17" height="17"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round">
-        <rect x="8" y="8"
-          width="12" height="12" rx="2"/>
-        <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>
-      </svg>
-    `;
-
-    copy.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(bubble.textContent);
-
-        copy.title = "Copied!";
-        copy.setAttribute("aria-label", "Copied!");
-      } catch {
-        error("Copy failed. Please select and copy the reply manually.");
-      }
-    });
-
-    turn.append(copy);
+  function renderHistory() {
+    showWelcome();
+    for (const item of history) {
+      appendMessage(item.role, item.content, item.role === 'assistant');
+    }
   }
 
-  // Clear all private conversation data
-  function clearPrivateChat() {
-    // Invalidate all previously started requests.
-    ++requestId;
-
-    // Cancel an unfinished AI request.
-    if (activeController) {
-      activeController.abort();
-    }
-
-    activeController = null;
-    history = [];
-    sessionUserId = null;
+  function cancelWork() {
+    ++generation;
+    controller?.abort();
+    controller = null;
     busy = false;
-
     send.disabled = false;
     input.disabled = false;
-    input.value = "";
-
-    thread.replaceChildren();
-
-    const welcome = document.createElement("div");
-    welcome.className = "mdai-welcome";
-    welcome.textContent = "Start a new private conversation.";
-
-    thread.append(welcome);
-
-    error("");
   }
 
-  // Clear conversation after inactivity
-  function resetIdle() {
-    clearTimeout(idleTimer);
+  function clearLocal() {
+    cancelWork();
+    clearTimeout(expiryTimer);
+    history = [];
+    userId = null;
+    expiresAt = null;
+    input.value = '';
+    error('');
+    showWelcome();
+  }
 
-    if (drawer?.classList.contains("open")) {
-      idleTimer = setTimeout(clearPrivateChat, 5 * 60 * 1000);
+  function isOpen() { return drawer.classList.contains('open'); }
+  function isCurrent(sequence, uid) {
+    return generation === sequence && isOpen() && userId === uid;
+  }
+
+  function setExpiry(iso) {
+    expiresAt = iso;
+    clearTimeout(expiryTimer);
+    if (!iso) return;
+    const ms = Date.parse(iso) - Date.now();
+    if (ms <= 0) { clearLocal(); return; }
+    // Clear expired content from the visible browser as well as from future reads.
+    expiryTimer = setTimeout(() => {
+      clearLocal();
+      error('Your previous conversation expired after 24 hours. Start a new chat.');
+    }, Math.min(ms + 20, 2147483647));
+  }
+
+  async function sessionForCurrentUser() {
+    const { data, error: authError } = await client.auth.getSession();
+    if (authError || !data?.session?.user?.id) throw Error('Please sign in again.');
+    return data.session;
+  }
+
+  // Serialize all writes and deletions so New Chat cannot be undone by
+  // an earlier in-flight save. No messages go into localStorage.
+  function enqueueWrite(operation) {
+    const next = writeQueue.catch(() => {}).then(operation);
+    writeQueue = next.catch(() => {});
+    return next;
+  }
+
+  async function openChat() {
+    clearLocal();
+    const sequence = generation;
+    showWelcome('Loading your private conversation…');
+    try {
+      const session = await sessionForCurrentUser();
+      if (sequence !== generation || !isOpen()) return;
+      const uid = session.user.id;
+      userId = uid;
+      const { data, error: dbError } = await client
+        .from('ai_chats')
+        .select('messages,expires_at')
+        .eq('user_id', uid)
+        .gt('expires_at', new Date().toISOString())
+        .maybeSingle();
+      if (dbError) throw dbError;
+      if (!isCurrent(sequence, uid)) return;
+      history = Array.isArray(data?.messages)
+        ? data.messages.filter(m => m && ['user', 'assistant'].includes(m.role) && typeof m.content === 'string').slice(-12)
+        : [];
+      renderHistory();
+      if (data?.expires_at) setExpiry(data.expires_at);
+    } catch (e) {
+      if (sequence !== generation || !isOpen()) return;
+      history = [];
+      showWelcome('Could not load your saved conversation.');
+      error('Chat storage error: ' + (e.message || 'Please try again.'));
     }
   }
 
-  // Submit an AI prompt
   async function submit() {
-    if (busy) return;
-    if (!drawer?.classList.contains("open")) return;
-
+    if (busy || !isOpen()) return;
     const message = input.value.trim();
-
     if (!message) return;
-
-    error("");
-
+    if (!userId) { error('Please wait for your private chat to load.'); return; }
+    if (expiresAt && Date.parse(expiresAt) <= Date.now()) {
+      clearLocal();
+      error('Chat expired. Close and reopen Ask AI to start a new one.');
+      return;
+    }
+    error('');
     busy = true;
     send.disabled = true;
     input.disabled = true;
-
+    const sequence = ++generation;
+    const uid = userId;
     const prior = history.slice(-10);
-    const currentRequest = ++requestId;
-
-    const controller = new AbortController();
-    activeController = controller;
-
-    add("user", message);
-    input.value = "";
-
-    const pending = add("assistant", "Thinking…");
-
-    resetIdle();
+    const abort = new AbortController();
+    controller = abort;
+    appendMessage('user', message);
+    input.value = '';
+    const pending = appendMessage('assistant', 'Thinking…');
 
     try {
-      // Check the signed-in Supabase agent.
-      const {
-        data: { session },
-        error: authError,
-      } = await client.auth.getSession();
-
-      if (currentRequest !== requestId) return;
-
-      if (authError || !session) {
-        throw Error("Please sign in to MacroDesk again.");
-      }
-
-      // Prevent history crossing user accounts.
-      if (sessionUserId && session.user?.id !== sessionUserId) {
-        clearPrivateChat();
-        return;
-      }
-
-      sessionUserId = session.user?.id || null;
-
-      // Send prompt to Cloudflare Worker.
+      const session = await sessionForCurrentUser();
+      if (!isCurrent(sequence, uid)) return;
+      if (session.user.id !== uid) { clearLocal(); return; }
       const response = await fetch(worker, {
-        signal: controller.signal,
-        method: "POST",
+        signal: abort.signal,
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + session.access_token,
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + session.access_token
         },
         body: JSON.stringify({
-          message,
-          history: prior,
-          action: "chat",
-          language: el("language")?.value || "English",
-          tone: el("tone")?.value || "professional",
-        }),
+          action: 'chat', message, history: prior,
+          language: el('language')?.value || 'English',
+          tone: el('tone')?.value || 'professional'
+        })
       });
-
-      if (currentRequest !== requestId) return;
-
       const data = await response.json().catch(() => ({}));
+      if (!isCurrent(sequence, uid)) return;
+      if (!response.ok) throw Error(data.error || `AI error ${response.status}`);
+      if (typeof data.reply !== 'string' || !data.reply.trim()) throw Error('Empty AI response.');
+      const reply = cleanReply(data.reply);
+      const nextHistory = [...history, { role: 'user', content: message }, { role: 'assistant', content: reply }].slice(-12);
 
-      if (!response.ok) {
-        throw Error(data.error || `Worker error ${response.status}`);
-      }
-
-      if (typeof data.reply !== "string" || !data.reply.trim()) {
-        throw Error("The AI returned an empty response.");
-      }
-
-      // Reject any reply from a cleared conversation.
-      if (currentRequest !== requestId) return;
-
-      if (!drawer?.classList.contains("open")) return;
-
-      pending.bubble.textContent = cleanAIReply(data.reply);
-
-      history.push(
-        { role: "user", content: message },
-        {
-          role: "assistant",
-          content: pending.bubble.textContent,
-        },
-      );
-
-      // Keep only recent messages in temporary memory.
-      history = history.slice(-12);
-
-      addCopyButton(pending.turn, pending.bubble);
+      // Save only after a successful AI response. The server binds the record
+      // to auth.uid(), never to a user ID supplied by the browser.
+      const result = await enqueueWrite(async () => {
+        if (!isCurrent(sequence, uid)) return null;
+        const { data: expiry, error: saveError } = await client.rpc(
+          'macrodesk_save_ai_chat', { p_messages: nextHistory }
+        );
+        if (saveError) throw saveError;
+        return expiry;
+      });
+      if (!isCurrent(sequence, uid)) return;
+      history = nextHistory;
+      pending.turn.remove();
+      appendMessage('assistant', reply, true);
+      if (result) setExpiry(result);
     } catch (e) {
-      if (currentRequest !== requestId) return;
-
-      if (e.name === "AbortError") return;
-
-      pending.bubble.textContent =
-        "Sorry, I couldn’t respond. Please try again.";
-
-      error(e.message || "Request failed.");
+      if (!isCurrent(sequence, uid) || e.name === 'AbortError') return;
+      pending.bubble.textContent = 'Unable to save or generate the reply. Please try again.';
+      error(e.message || 'AI request failed.');
     } finally {
-      if (currentRequest === requestId) {
-        activeController = null;
+      if (isCurrent(sequence, uid)) {
         busy = false;
-
+        controller = null;
         send.disabled = false;
         input.disabled = false;
-
-        if (drawer?.classList.contains("open")) {
-          input.focus();
-          resetIdle();
-        }
-
-        thread.scrollTop = thread.scrollHeight;
+        input.focus();
       }
     }
   }
 
-  // Close popup: delete chat and cancel requests.
-  document.addEventListener("macrodesk-ai-closed", () => {
-    clearTimeout(idleTimer);
-    clearPrivateChat();
-  });
+  async function newChat() {
+    const oldUid = userId;
+    clearLocal();
+    if (!oldUid) { if (isOpen()) await openChat(); return; }
+    showWelcome('Deleting your saved conversation…');
+    const sequence = generation;
+    try {
+      await enqueueWrite(async () => {
+        const session = await sessionForCurrentUser();
+        if (session.user.id !== oldUid) throw Error('Account changed.');
+        const { error: dbError } = await client.from('ai_chats').delete().eq('user_id', oldUid);
+        if (dbError) throw dbError;
+      });
+      if (sequence === generation && isOpen()) await openChat();
+    } catch (e) {
+      if (sequence !== generation) return;
+      showWelcome('Could not delete the saved conversation.');
+      error('Delete failed: ' + (e.message || 'Please try again.'));
+    }
+  }
 
-  // Open popup: always begin with an empty chat.
-  document.addEventListener("macrodesk-ai-opened", () => {
-    clearPrivateChat();
-    resetIdle();
-  });
-
-  // Sign out: delete chat immediately.
-  document
-    .getElementById("logoutBtn")
-    ?.addEventListener("click", clearPrivateChat, { capture: true });
-
-  // Refresh or leave page: clear chat.
-  window.addEventListener("pagehide", clearPrivateChat);
-
-  // Handle account changes.
+  document.addEventListener('macrodesk-ai-opened', openChat);
+  document.addEventListener('macrodesk-ai-closed', clearLocal);
+  document.getElementById('logoutBtn')?.addEventListener('click', clearLocal, { capture: true });
+  window.addEventListener('pagehide', clearLocal);
   client.auth.onAuthStateChange((event, session) => {
-    if (
-      event === "SIGNED_OUT" ||
-      event === "USER_UPDATED" ||
-      (sessionUserId && session?.user?.id && session.user.id !== sessionUserId)
-    ) {
-      clearPrivateChat();
+    if (event === 'SIGNED_OUT' || (userId && session?.user?.id && session.user.id !== userId)) {
+      clearLocal();
     }
   });
-
-  // Track user interaction.
-  input.addEventListener("input", resetIdle);
-
-  thread.addEventListener("click", resetIdle);
-
-  // Send button
-  send.addEventListener("click", submit);
-
-  // Enter = send
-  // Shift + Enter = new line
-  input.addEventListener("keydown", (e) => {
-    if (
-      e.key === "Enter" &&
-      !e.shiftKey &&
-      !e.isComposing &&
-      e.keyCode !== 229
-    ) {
+  send.addEventListener('click', submit);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
       e.preventDefault();
       submit();
     }
   });
-
-  // New Chat: delete previous conversation.
-  el("new")?.addEventListener("click", () => {
-    clearPrivateChat();
-    resetIdle();
-    input.focus();
-  });
+  el('new')?.addEventListener('click', newChat);
 })();
