@@ -207,7 +207,8 @@
   /* ---------- views ---------- */
   const titles = {
     searchView: ['Find a macro', 'Search by situation, keyword, category, or wording.'],
-    manageView: ['Manage macros', 'Keep the shared library accurate and organized.']
+    manageView: ['Manage macros', 'Keep the shared library accurate and organized.'],
+    aiView: ['AI Assistant', 'Generate and refine client replies with Gemini.']
   };
   function showView(id) {
     document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active-view', v.id === id));

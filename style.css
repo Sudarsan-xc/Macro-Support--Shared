@@ -418,3 +418,18 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
 }
+
+/* Integrated AI Assistant */
+.mdai-shell{max-width:1250px;margin:0 auto}.mdai-heading{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:22px}.mdai-heading h2{font-size:25px;margin:0 0 6px}.mdai-heading p{color:var(--muted);margin:0}.mdai-chip{background:#e6f6f4;color:#087e79;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;white-space:nowrap}.mdai-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px}.mdai-card{background:white;border:1px solid var(--line);border-radius:18px;padding:24px;min-width:0;box-shadow:0 6px 24px rgba(17,37,60,.035)}.mdai-card label{display:block;font-weight:700;font-size:13px;margin-bottom:9px}.mdai-card textarea{display:block;width:100%;box-sizing:border-box;resize:vertical;min-height:180px;border:1px solid #d7e1ec;border-radius:12px;padding:14px;font:inherit;background:#f8fafc;color:#16283f}.mdai-card textarea:focus,.mdai-card select:focus{outline:2px solid #17a39a;outline-offset:1px}.mdai-controls{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}.mdai-controls select{width:100%;border:1px solid #d7e1ec;background:white;padding:11px;border-radius:9px;font:inherit}.mdai-card button{cursor:pointer}.mdai-card button:disabled{opacity:.55;cursor:wait}.mdai-note{font-size:12px;line-height:1.6;color:var(--muted);margin-top:16px}.mdai-result-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.mdai-result-head h3{margin:0;font-size:19px}.mdai-result-head span{font-size:12px;color:#087e79}.mdai-reply{min-height:220px;padding:20px;border-radius:12px;background:#f3f7fb;color:#253b56;white-space:pre-wrap;line-height:1.7;overflow-wrap:anywhere}.mdai-buttons{display:flex;flex-wrap:wrap;gap:10px;margin-top:17px}.mdai-error{color:#b42318;font-size:13px;line-height:1.5}.mdai-card .ghost{padding:10px 14px}@media(max-width:1000px){.mdai-grid{grid-template-columns:1fr}}@media(max-width:550px){.mdai-controls{grid-template-columns:1fr}.mdai-card{padding:16px}.mdai-heading{align-items:flex-start;flex-direction:column}}
+
+/* Prominent AI launch card in the upper-right of Find a macro */
+.mdai-quick-row{display:flex;justify-content:flex-end;margin:-3px 0 14px}
+.mdai-quick-launch{display:flex;align-items:center;gap:13px;text-align:left;width:min(100%,355px);padding:16px 17px;border:1px solid #b7dcd9;border-radius:15px;background:linear-gradient(115deg,#ecfbf9,#fff);box-shadow:0 5px 16px rgba(14,119,111,.07);cursor:pointer;color:#123047;transition:transform .15s,box-shadow .15s}
+.mdai-quick-launch:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(14,119,111,.13)}
+.mdai-quick-launch:focus-visible{outline:3px solid #0e9991;outline-offset:3px}
+.mdai-quick-icon{display:grid;place-items:center;flex:0 0 42px;height:42px;background:#0b8f87;color:#fff;border-radius:12px;font-size:25px}
+.mdai-quick-text{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.mdai-quick-text strong{font-size:14px;font-weight:750}
+.mdai-quick-text small{font-size:12px;color:#5b7483}
+.mdai-quick-arrow{font-size:24px;color:#0b8f87}
+@media(max-width:600px){.mdai-quick-row{justify-content:stretch}.mdai-quick-launch{width:100%}}

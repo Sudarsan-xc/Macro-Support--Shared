@@ -539,6 +539,10 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
         <span>Manage macros</span>
       </button>
+      <button class="nav-item" data-view="aiView" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></svg>
+        <span>✦ AI Assistant</span>
+      </button>
     </nav>
 
     <div class="side-section">
@@ -566,6 +570,22 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
       </div>
     </header>
 
+    <!-- INTEGRATED AI ASSISTANT -->
+    <section id="aiView" class="view">
+      <div class="mdai-shell">
+        <div class="mdai-heading"><div><h2>✦ MacroDesk AI Assistant</h2><p>Draft replies for clients and couriers, right inside MacroDesk.</p></div><span class="mdai-chip">Gemini AI</span></div>
+        <div class="mdai-grid">
+          <div class="mdai-card">
+            <label for="mdai-message">Client / courier message</label>
+            <textarea id="mdai-message" maxlength="5000" rows="7" placeholder="Paste the message here. Remove personal information first."></textarea>
+            <div class="mdai-controls"><label>Language<select id="mdai-language"><option>English</option><option>Roman Nepali</option><option>English and Roman Nepali mix</option></select></label><label>Tone<select id="mdai-tone"><option value="empathetic">Empathetic</option><option value="professional">Professional</option><option value="concise">Short and clear</option></select></label></div>
+            <button id="mdai-generate" class="primary" type="button">✦ Generate reply</button>
+            <p class="mdai-note">Never paste names, phone numbers, addresses or payment details. Verify policies and order facts before sending.</p>
+          </div>
+          <div class="mdai-card"><div class="mdai-result-head"><h3>Suggested reply</h3><span id="mdai-status" aria-live="polite"></span></div><div id="mdai-reply" class="mdai-reply" aria-live="polite">Your AI-generated response will appear here.</div><div class="mdai-buttons"><button type="button" id="mdai-copy" class="ghost">Copy reply</button><button type="button" id="mdai-shorten" class="ghost">Shorten</button><button type="button" id="mdai-polish" class="ghost">Polish</button></div><p id="mdai-error" class="mdai-error" role="alert"></p></div>
+        </div>
+      </div>
+    </section>
     <!-- SEARCH VIEW -->
     <section id="searchView" class="view active-view">
       <div class="search-hero">
@@ -582,6 +602,15 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
           <button data-query="delivery">Delivery</button>
           <button data-query="cancelled">Cancelled</button>
         </div>
+      </div>
+
+      <!-- AI quick-launch card in the upper-right area of Find a macro -->
+      <div class="mdai-quick-row">
+        <button type="button" class="mdai-quick-launch" id="mdaiQuickLaunch" aria-label="Open AI Assistant inside MacroDesk">
+          <span class="mdai-quick-icon">✦</span>
+          <span class="mdai-quick-text"><strong>MacroDesk AI Assistant</strong><small>Draft a client reply with Gemini</small></span>
+          <span class="mdai-quick-arrow" aria-hidden="true">→</span>
+        </button>
       </div>
 
       <div id="categoryChips" class="chips" role="tablist" aria-label="Filter by category"></div>
@@ -664,6 +693,8 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<script src="ai-settings.js"></script>
 <script src="script.js"></script>
+<script src="ai-embedded.js"></script>
 </body>
 </html>
