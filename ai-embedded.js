@@ -16,7 +16,7 @@ function cleanAIReply(text) {
   const worker = (settings.workerUrl || '').replace(/\/$/, '');
   const thread = el('thread'), input = el('message'), send = el('generate');
   if (!thread || !input || !send) return;
-  let history = [], busy = false, client;
+  let history = [], busy = false, client, activeController = null, requestId = 0;
   const error = message => { el('error').textContent = message || ''; };
   try {
     if (!window.supabase || !url || !key || !worker) throw Error('AI configuration missing. Check ai-settings.js and config.js.');
@@ -49,12 +49,15 @@ function cleanAIReply(text) {
     if (!message) return;
     error(''); busy = true; send.disabled = true; input.disabled = true;
     const prior = history.slice(-10);
+    const currentRequest = ++requestId;
+    activeController = new AbortController();
     add('user', message); input.value = '';
     const pending = add('assistant', 'Thinking…');
     try {
       const {data:{session}, error:authError} = await client.auth.getSession();
       if (authError || !session) throw Error('Please sign in to MacroDesk again.');
       const response = await fetch(worker, {
+        signal: activeController.signal,
         method: 'POST',
         headers: {'Content-Type':'application/json', 'Authorization':'Bearer ' + session.access_token},
         body: JSON.stringify({message, history: prior, action:'chat', language: el('language')?.value || 'English', tone: el('tone')?.value || 'professional'})
@@ -62,6 +65,7 @@ function cleanAIReply(text) {
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw Error(data.error || `Worker error ${response.status}`);
       if (typeof data.reply !== 'string' || !data.reply.trim()) throw Error('The AI returned an empty response.');
+      if (currentRequest !== requestId) return;
       pending.bubble.textContent = cleanAIReply(data.reply);
       history.push({role:'user',content:message}, {role:'assistant',content:pending.bubble.textContent});
       history = history.slice(-12);
@@ -73,13 +77,26 @@ function cleanAIReply(text) {
       });
       pending.turn.append(copy);
     } catch (e) {
+      if (currentRequest !== requestId) return;
       pending.bubble.textContent = 'Sorry, I couldn’t respond. Please try again.';
       error(e.message || 'Request failed.');
     } finally {
-      busy = false; send.disabled = false; input.disabled = false;
-      input.focus(); thread.scrollTop = thread.scrollHeight;
+      if (currentRequest === requestId) {
+        activeController = null; busy = false; send.disabled = false; input.disabled = false;
+        if (document.getElementById('splitAiPanel')?.classList.contains('open')) input.focus();
+        thread.scrollTop = thread.scrollHeight;
+      }
     }
   }
+  document.addEventListener('macrodesk-ai-closed', () => {
+    if (activeController) {
+      activeController.abort(); activeController = null; ++requestId;
+      busy = false; send.disabled = false; input.disabled = false;
+      thread.querySelectorAll('.mdai-turn.assistant').forEach(turn => {
+        if (turn.textContent.includes('Thinking…')) turn.remove();
+      });
+    }
+  });
   send.addEventListener('click', submit);
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
