@@ -1,3 +1,11 @@
+function cleanAIReply(text) {
+  return String(text || '').trim()
+    .replace(/^Ready\s*\n+/i, '')
+    .replace(/^Here is (?:a |the )?(?:professional|polite|friendly|concise|short|ready-to-copy|ready-to-send|suggested|refined|polished|improved|empathetic|clear|courteous|formal|informal|support)[^\n:]{0,160}(?:\s+based on your instructions)?\s*:\s*/i, '')
+    .replace(/^\*{1,3}(?=\S)/, '')
+    .replace(/\*{1,3}\s*$/, '')
+    .trim();
+}
 /* MacroDesk AI integration. Configure ai-settings.js before deploying. */
 const $ = (id) => document.getElementById(id);
 let client,
@@ -75,7 +83,7 @@ async function generate(action = "generate") {
     const payload = await response.json().catch(() => ({}));
     if (!response.ok)
       throw new Error(payload.error || `Request failed (${response.status})`);
-    currentReply = payload.reply || "";
+    currentReply = cleanAIReply(payload.reply || "");
     lastMessage = message;
     $("reply").textContent = currentReply;
   } catch (e) {
@@ -92,8 +100,8 @@ $("copy").addEventListener("click", async () => {
   if (!currentReply) return;
   try {
     await navigator.clipboard.writeText(currentReply);
-    $("copy").textContent = "Copied!";
-    setTimeout(() => ($("copy").textContent = "Copy reply"), 1500);
+    $("copy").setAttribute("title", "Copied!");
+    setTimeout(() => $("copy").setAttribute("title", "Copy response"), 1500);
   } catch {
     showError("Copy failed. Select the reply and copy manually.");
   }

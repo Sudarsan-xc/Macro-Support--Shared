@@ -429,7 +429,66 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
   * { transition: none !important; }
 }
 
+
+
+/* ===== MacroDesk mobile navigation + aligned AI search (2026) ===== */
+html,body{max-width:100%;overflow-x:clip}
+.app-shell{min-width:0}
+.main{min-width:0}
+.mobile-menu-btn,.sidebar-overlay{display:none}
+.macro-search-ai-row{display:flex;align-items:stretch;gap:10px;width:100%;min-width:0}
+.macro-search-ai-row .big-search{flex:1 1 0;min-width:0;width:auto;max-width:none;margin:0}
+.macro-search-ai-row .big-search input{width:100%;min-width:0}
+.macro-ai-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;min-width:118px;min-height:54px;padding:10px 16px;border:0;border-radius:14px;background:#0b8f87;color:white;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer}
+.macro-ai-btn:hover{background:#08766f}
+.macro-ai-btn:focus-visible{outline:3px solid #0b8f87;outline-offset:3px}
+@media(max-width:1000px){
+ .app-shell{display:block!important;width:100%;min-height:100dvh}
+ .app-shell .sidebar{position:fixed!important;top:0;left:0;bottom:0;z-index:1100;width:min(290px,85vw)!important;max-width:85vw;height:100dvh;display:flex!important;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:20px;margin:0;padding:22px 14px;overflow:hidden;transform:translateX(-105%);transition:transform .25s ease;visibility:hidden}
+ .app-shell .sidebar.mobile-open{transform:translateX(0);visibility:visible}
+ .app-shell .sidebar nav{display:grid!important;margin:0;width:100%;gap:4px}
+ .app-shell .sidebar .side-section{display:block!important;flex:1;min-height:0;margin:0;overflow-y:auto}
+ .app-shell .sidebar .sidebar-bottom{margin:0}
+ .sidebar-overlay.mobile-open{display:block;position:fixed;inset:0;z-index:1090;background:rgba(0,0,0,.52)}
+ .mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center;flex:0 0 42px;width:42px;height:42px;border:1px solid #dce3ed;border-radius:11px;background:#fff;color:#10243d;font-size:23px;cursor:pointer}
+ .main{width:100%!important;min-width:0!important;margin:0!important;padding:18px 16px 45px!important}
+ .topbar{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+ .topbar .title-block{flex:1 1 calc(100% - 60px);min-width:0}
+ .title-block h1{font-size:clamp(23px,5.5vw,30px)}
+ .top-actions{display:flex;width:100%;flex-wrap:wrap;gap:8px}
+ .top-actions .ghost,.top-actions .primary,.top-actions .file-btn{padding:9px 11px;font-size:13px}
+ .search-hero,.macro-search-ai-row{max-width:100%;width:100%}
+ .macro-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr))}
+ .manage-layout{grid-template-columns:minmax(0,1fr)}
+ .editor-card{position:static}
+ .chips{max-width:100%;overflow-x:auto}
+ .mdai-shell,.mdai-grid,.mdai-card{min-width:0;max-width:100%}
+ .mdai-grid{grid-template-columns:minmax(0,1fr)}
+ .mdai-card{padding:16px}
+ .mdai-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .mdai-reply{overflow-wrap:anywhere}
+}
+@media(max-width:560px){
+ .main{padding:14px 12px 36px!important}
+ .macro-search-ai-row{gap:8px}
+ .macro-search-ai-row .big-search{gap:7px;padding:4px 10px;min-height:54px}
+ .macro-search-ai-row .big-search svg{width:19px;height:19px}
+ .macro-search-ai-row .big-search input{font-size:16px;padding:12px 0}
+ .macro-ai-btn{min-width:0;padding:9px 11px;font-size:13px;gap:4px}
+ .macro-ai-btn span:first-child{font-size:18px}
+ .macro-grid{grid-template-columns:minmax(0,1fr)}
+ .two-col,.mdai-controls{grid-template-columns:minmax(0,1fr)}
+ .results-toolbar{flex-wrap:wrap}
+ .manage-item{flex-wrap:wrap}
+ .mdai-heading{flex-wrap:wrap}
+ .mdai-card textarea{min-height:130px}
+ .top-actions .user-email{display:none}
+}
+@media(max-width:360px){.macro-ai-btn{padding:8px;font-size:12px}.main{padding:12px 10px 30px!important}}
+@media(prefers-reduced-motion:reduce){.app-shell .sidebar{transition:none}}
+
 </style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -524,7 +583,7 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
 
 <!-- ============ APP ============ -->
 <div id="appShell" class="app-shell hidden">
-  <aside class="sidebar">
+  <aside class="sidebar" id="macroSidebar">
     <div class="brand brand-light">
       <div class="brand-mark">M</div>
       <div><strong>MacroDesk</strong><span>Shared Support Console</span></div>
@@ -539,10 +598,6 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
         <span>Manage macros</span>
       </button>
-      <button class="nav-item" data-view="aiView" type="button">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3Z"/><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></svg>
-        <span>✦ AI Assistant</span>
-      </button>
     </nav>
 
     <div class="side-section">
@@ -554,9 +609,13 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
       <button id="logoutBtn" class="logout-btn">Sign out</button>
     </div>
   </aside>
+  <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
 
   <main class="main">
     <header class="topbar">
+      <button type="button" id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Open navigation menu" aria-controls="macroSidebar" aria-expanded="false">
+        <span aria-hidden="true">☰</span>
+      </button>
       <div class="title-block">
         <h1 id="pageTitle">Find a macro</h1>
         <p id="pageSub">Search by situation, keyword, category, or wording.</p>
@@ -570,48 +629,51 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
       </div>
     </header>
 
-    <!-- INTEGRATED AI ASSISTANT -->
-    <section id="aiView" class="view">
-      <div class="mdai-shell">
-        <div class="mdai-heading"><div><h2>✦ MacroDesk AI Assistant</h2><p>Draft replies for clients and couriers, right inside MacroDesk.</p></div><span class="mdai-chip">Gemini AI</span></div>
-        <div class="mdai-grid">
-          <div class="mdai-card">
-            <label for="mdai-message">Client / courier message</label>
-            <textarea id="mdai-message" maxlength="5000" rows="7" placeholder="Paste the message here. Remove personal information first."></textarea>
-            <div class="mdai-controls"><label>Language<select id="mdai-language"><option>English</option><option>Roman Nepali</option><option>English and Roman Nepali mix</option></select></label><label>Tone<select id="mdai-tone"><option value="empathetic">Empathetic</option><option value="professional">Professional</option><option value="concise">Short and clear</option></select></label></div>
-            <button id="mdai-generate" class="primary" type="button">✦ Generate reply</button>
-            <p class="mdai-note">Never paste names, phone numbers, addresses or payment details. Verify policies and order facts before sending.</p>
-          </div>
-          <div class="mdai-card"><div class="mdai-result-head"><h3>Suggested reply</h3><span id="mdai-status" aria-live="polite"></span></div><div id="mdai-reply" class="mdai-reply" aria-live="polite">Your AI-generated response will appear here.</div><div class="mdai-buttons"><button type="button" id="mdai-copy" class="ghost">Copy reply</button><button type="button" id="mdai-shorten" class="ghost">Shorten</button><button type="button" id="mdai-polish" class="ghost">Polish</button></div><p id="mdai-error" class="mdai-error" role="alert"></p></div>
-        </div>
-      </div>
-    </section>
+    <!-- AI is a closed-by-default drawer, opened only with Ask AI -->
+    <section id="aiView" class="view" aria-hidden="true"></section>
     <!-- SEARCH VIEW -->
     <section id="searchView" class="view active-view">
-      <div class="search-hero">
-        <div class="big-search">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input id="search" autocomplete="off" placeholder="What do you need to respond to? e.g. client refused to pay" aria-label="Search macros">
-          <button id="clearSearch" class="hidden" aria-label="Clear search">×</button>
-          <kbd title="Press / to focus search">/</kbd>
-        </div>
-        <div class="quick-row">
-          <span>Try:</span>
-          <button data-query="payment">Payment</button>
-          <button data-query="client unreachable">Client unreachable</button>
-          <button data-query="delivery">Delivery</button>
-          <button data-query="cancelled">Cancelled</button>
-        </div>
-      </div>
+<div class="search-hero">
 
-      <!-- AI quick-launch card in the upper-right area of Find a macro -->
-      <div class="mdai-quick-row">
-        <button type="button" class="mdai-quick-launch" id="mdaiQuickLaunch" aria-label="Open AI Assistant inside MacroDesk">
-          <span class="mdai-quick-icon">✦</span>
-          <span class="mdai-quick-text"><strong>MacroDesk AI Assistant</strong><small>Draft a client reply with Gemini</small></span>
-          <span class="mdai-quick-arrow" aria-hidden="true">→</span>
-        </button>
-      </div>
+  <div class="macro-search-ai-row">
+
+    <!-- Existing macro search -->
+    <div class="big-search">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/>
+        <path d="m20 20-3.5-3.5"/>
+      </svg>
+
+      <input
+        id="search"
+        autocomplete="off"
+        placeholder="Search macros..."
+        aria-label="Search macros"
+      >
+
+      <button
+        id="clearSearch"
+        class="hidden"
+        aria-label="Clear search"
+      >×</button>
+
+      <kbd title="Press / to focus search">/</kbd>
+    </div>
+
+    <!-- New AI button -->
+    <button
+      type="button"
+      id="mdaiQuickLaunch"
+      class="macro-ai-btn"
+      aria-label="Open MacroDesk AI Assistant"
+    >
+      <span>✦</span>
+      <span>Ask AI</span>
+    </button>
+
+  </div>
+
+
 
       <div id="categoryChips" class="chips" role="tablist" aria-label="Filter by category"></div>
 
@@ -628,6 +690,9 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
         <p>Try fewer words, or pick a different category.</p>
         <button id="resetFilters" class="ghost">Show all macros</button>
       </div>
+    </div><!-- /.search-hero -->
+
+
     </section>
 
     <!-- MANAGE VIEW -->
@@ -670,6 +735,10 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
   </main>
 </div>
 
+<!-- ============ AI DRAWER ============ -->
+<div id="mdaiOverlay" class="mdai-overlay" aria-hidden="true"></div>
+<aside class="mdai-drawer" id="splitAiPanel" inert role="dialog" aria-modal="true" aria-hidden="true" tabindex="-1" aria-label="MacroDesk AI chat"><div class="mdai-chat-shell"><div class="mdai-chat-header"><div><h2>✦ MacroDesk AI</h2><p>Ask, refine and copy support replies</p></div><div class="mdai-head-actions"><button id="mdai-close" type="button" class="icon-btn" aria-label="Close AI Assistant">×</button><button id="mdai-new" type="button" class="ghost small">+ New chat</button></div></div><div class="mdai-thread" id="mdai-thread" role="log" aria-live="polite"><div class="mdai-welcome"><strong>How can I help you?</strong><p>Ask anything, or request a customer support reply.</p></div></div><div class="mdai-chat-bottom"><p id="mdai-error" class="mdai-error" role="alert"></p><div class="mdai-compose"><textarea id="mdai-message" rows="2" maxlength="4500" placeholder="Ask MacroDesk AI..." aria-label="AI prompt"></textarea><button id="mdai-generate" type="button" class="primary">Send ↗</button></div><p class="mdai-privacy">Enter to send · Shift + Enter for a new line. Avoid personal or payment information.</p></div></div></aside>
+
 <!-- ============ DETAIL DRAWER ============ -->
 <div id="drawerOverlay" class="drawer-overlay"></div>
 <aside id="drawer" class="drawer" aria-hidden="true" aria-label="Macro details">
@@ -696,5 +765,7 @@ mark { background: #fde7a0; color: inherit; border-radius: 3px; padding: 0 1px; 
 <script src="ai-settings.js"></script>
 <script src="script.js"></script>
 <script src="ai-embedded.js"></script>
+<script src="mobile-nav.js"></script>
+<script src="ai-drawer-nav.js"></script>
 </body>
 </html>
